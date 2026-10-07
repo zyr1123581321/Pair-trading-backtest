@@ -7,36 +7,47 @@ import pandas as pd
 
 
 def sharpe_ratio(daily_pnl: pd.Series, annual_factor: float = 252) -> float:
-    """Annualized Sharpe ratio (assuming zero risk-free rate)."""
-    std = daily_pnl.std()
-    if std < 1e-15:
-        return np.inf if daily_pnl.mean() > 0 else 0.0
-    return daily_pnl.mean() / std * np.sqrt(annual_factor)
+    """Annualized Sharpe ratio (assuming zero risk-free rate).
+
+    Formula: (mean daily return / std daily return) * sqrt(252)
+
+    Edge case: if std is effectively zero (< 1e-15), return np.inf
+    if mean > 0, else 0.0.
+    """
+    raise NotImplementedError("TODO: implement")
 
 
 def annualized_return(daily_pnl: pd.Series, annual_factor: float = 252) -> float:
-    """Annualized return from daily additive returns."""
-    return daily_pnl.mean() * annual_factor
+    """Annualized return from daily additive returns.
+
+    Formula: mean_daily_return * 252
+    """
+    raise NotImplementedError("TODO: implement")
 
 
 def max_drawdown(cumulative_pnl: pd.Series) -> float:
-    """Maximum drawdown (as a positive number)."""
-    running_max = cumulative_pnl.cummax()
-    drawdown = running_max - cumulative_pnl
-    return drawdown.max()
+    """Maximum drawdown as a positive number.
+
+    Steps:
+      1. Compute the running maximum: cumulative_pnl.cummax()
+      2. Drawdown at each point = running_max - cumulative_pnl
+      3. Return the maximum drawdown value.
+    """
+    raise NotImplementedError("TODO: implement")
 
 
 def win_rate(daily_pnl: pd.Series) -> float:
-    """Fraction of trading days with positive PnL."""
-    active = daily_pnl[daily_pnl != 0]
-    if len(active) == 0:
-        return 0.0
-    return (active > 0).mean()
+    """Fraction of active trading days with positive PnL.
+
+    Only count days where PnL != 0 (skip days with no position).
+    Return 0.0 if there are no active days.
+    """
+    raise NotImplementedError("TODO: implement")
 
 
 def turnover(positions: pd.Series) -> float:
     """Average daily turnover: mean absolute change in position."""
-    return positions.diff().abs().mean()
+    raise NotImplementedError("TODO: implement")
 
 
 def summary_table(
@@ -44,13 +55,9 @@ def summary_table(
     cumulative_pnl: pd.Series,
     positions: pd.Series,
 ) -> pd.Series:
-    """Compute all metrics and return as a labeled Series."""
-    return pd.Series(
-        {
-            "Annualized Return": annualized_return(daily_pnl),
-            "Sharpe Ratio": sharpe_ratio(daily_pnl),
-            "Max Drawdown": max_drawdown(cumulative_pnl),
-            "Win Rate": win_rate(daily_pnl),
-            "Avg Daily Turnover": turnover(positions),
-        }
-    )
+    """Compute all metrics and return as a labeled Series.
+
+    Keys: 'Annualized Return', 'Sharpe Ratio', 'Max Drawdown',
+          'Win Rate', 'Avg Daily Turnover'
+    """
+    raise NotImplementedError("TODO: implement")

@@ -13,16 +13,20 @@ def rolling_hedge_ratio(
     x: pd.Series,
     window: int = config.LOOKBACK_WINDOW,
 ) -> pd.Series:
-    """Rolling OLS β: y_t = β_t · x_t + ε, estimated on [t-window, t-1].
+    """Rolling OLS hedge ratio: y_t = beta_t * x_t + epsilon.
 
-    The hedge ratio at time t uses data up to t-1 to avoid look-ahead.
+    At each time t (starting from index `window`), fit OLS on the
+    PAST `window` days: y[t-window : t] and x[t-window : t].
+
+    CRITICAL: The slice must NOT include day t. Use y.iloc[i-window : i],
+    which gives indices [i-window, i-1]. This prevents look-ahead bias.
+
+    Returns a Series of the same length as y, with NaN for the first
+    `window` entries (not enough history).
+
+    Hint: np.polyfit(x_window, y_window, 1)[0] gives the slope (beta).
     """
-    beta = pd.Series(index=y.index, dtype=float)
-    for i in range(window, len(y)):
-        y_win = y.iloc[i - window : i]
-        x_win = x.iloc[i - window : i]
-        beta.iloc[i] = np.polyfit(x_win, y_win, 1)[0]
-    return beta
+    raise NotImplementedError("TODO: implement")
 
 
 def compute_spread(
@@ -30,21 +34,31 @@ def compute_spread(
     x: pd.Series,
     beta: pd.Series,
 ) -> pd.Series:
-    """Spread: s_t = y_t - β_t · x_t."""
-    return y - beta * x
+    """Spread: s_t = y_t - beta_t * x_t.
+
+    Simple element-wise subtraction. beta comes from rolling_hedge_ratio.
+    """
+    raise NotImplementedError("TODO: implement")
 
 
 def compute_zscore(
     spread: pd.Series,
     window: int = config.LOOKBACK_WINDOW,
 ) -> pd.Series:
-    """Z-score using rolling mean and std on [t-window, t-1].
+    """Z-score of the spread using rolling statistics.
 
-    At time t the z-score uses statistics up to t-1 (shifted window).
+    z_t = (s_t - mu_{t-1}) / sigma_{t-1}
+
+    where mu and sigma are the rolling mean and std over `window` days.
+
+    CRITICAL: The rolling stats must be SHIFTED by 1 day (.shift(1)).
+    Without the shift, you'd use today's spread value to compute today's
+    z-score normalization, which is a subtle form of look-ahead bias.
+
+    Use: spread.rolling(window).mean().shift(1) for mu
+         spread.rolling(window).std().shift(1)  for sigma
     """
-    roll_mean = spread.rolling(window).mean().shift(1)
-    roll_std = spread.rolling(window).std().shift(1)
-    return (spread - roll_mean) / roll_std
+    raise NotImplementedError("TODO: implement")
 
 
 def generate_positions(
@@ -56,34 +70,23 @@ def generate_positions(
     """State-machine position signal.
 
     Returns +1 (long spread), -1 (short spread), or 0 (flat).
-    Transitions:
-        flat  → short spread  when z > +entry_z
-        flat  → long  spread  when z < -entry_z
-        short → flat           when z <= exit_z  or z > stop_z
-        long  → flat           when z >= -exit_z or z < -stop_z
+
+    State transitions:
+        flat  -> short spread (-1)  when z > +entry_z   (spread is rich)
+        flat  -> long spread  (+1)  when z < -entry_z   (spread is cheap)
+        short -> flat         (0)   when z <= exit_z     (mean reverted)
+        short -> flat         (0)   when z > stop_z      (stop-loss)
+        long  -> flat         (0)   when z >= -exit_z    (mean reverted)
+        long  -> flat         (0)   when z < -stop_z     (stop-loss)
+
+    If z is NaN, reset to flat (state = 0).
+
+    Why a state machine: Without hysteresis, you'd flip in and out of
+    positions every day near the threshold, paying transaction costs
+    each time. The state machine enters at +/-2 and stays until mean
+    reversion (z crosses 0) or stop-loss (|z| > 3).
+
+    Implementation: Loop through the z-score series, track `state` as
+    a float (0, +1, or -1), and apply the transitions above.
     """
-    pos = pd.Series(0.0, index=zscore.index)
-    state = 0.0
-
-    for i in range(len(zscore)):
-        z = zscore.iloc[i]
-        if np.isnan(z):
-            pos.iloc[i] = 0.0
-            state = 0.0
-            continue
-
-        if state == 0.0:
-            if z > entry_z:
-                state = -1.0    # spread is rich → short spread
-            elif z < -entry_z:
-                state = 1.0     # spread is cheap → long spread
-        elif state == -1.0:
-            if z <= exit_z or z > stop_z:
-                state = 0.0
-        elif state == 1.0:
-            if z >= -exit_z or z < -stop_z:
-                state = 0.0
-
-        pos.iloc[i] = state
-
-    return pos
+    raise NotImplementedError("TODO: implement")

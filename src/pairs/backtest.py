@@ -18,41 +18,22 @@ def backtest_pair(
 ) -> pd.DataFrame:
     """Backtest a single pair.
 
-    The position signal is lagged by fill_delay bars to model execution delay.
+    Steps:
+      1. Delay positions and beta by `fill_delay` bars using .shift().
+         This models execution delay: signal at close t -> fill at close t+1.
+      2. Compute spread return:
+         spread_ret = y.pct_change() - delayed_beta * x.pct_change()
+      3. Gross PnL = delayed_position * spread_return
+      4. Transaction costs: charged on every position change.
+         pos_change = delayed_pos.diff().abs()
+         costs = pos_change * cost_frac * 2  (2 legs per pair trade)
+      5. Net PnL = gross - costs
+      6. Cumulative PnL = net_pnl.cumsum()
+
     Returns a DataFrame with columns:
-        spread_return, gross_pnl, costs, net_pnl, cumulative_pnl
+        position, spread_return, gross_pnl, costs, net_pnl, cumulative_pnl
     """
-    # Delayed positions: signal at t, filled at t + fill_delay
-    delayed_pos = positions.shift(fill_delay)
-    delayed_beta = beta.shift(fill_delay)
-
-    # Spread return: r_t = (y_t / y_{t-1} - 1) - β_{t-1} * (x_t / x_{t-1} - 1)
-    y_ret = y.pct_change()
-    x_ret = x.pct_change()
-    spread_ret = y_ret - delayed_beta * x_ret
-
-    gross_pnl = delayed_pos * spread_ret
-
-    # Costs: charged on position changes (entry, exit, flip)
-    pos_change = delayed_pos.diff().abs()
-    # Each unit of position change costs cost_frac per leg, 2 legs
-    costs = pos_change * cost_frac * 2
-
-    net_pnl = gross_pnl - costs
-
-    result = pd.DataFrame(
-        {
-            "position": delayed_pos,
-            "spread_return": spread_ret,
-            "gross_pnl": gross_pnl,
-            "costs": costs,
-            "net_pnl": net_pnl,
-        },
-        index=y.index,
-    )
-    result["cumulative_pnl"] = result["net_pnl"].cumsum()
-
-    return result
+    raise NotImplementedError("TODO: implement")
 
 
 def aggregate_pairs(
@@ -60,17 +41,11 @@ def aggregate_pairs(
 ) -> pd.DataFrame:
     """Combine PnL across all pairs (equal weight, additive returns).
 
-    Returns a DataFrame with portfolio-level daily and cumulative PnL.
+    Steps:
+      1. Extract the 'net_pnl' column from each pair's DataFrame.
+      2. Take the mean across all pairs for each day (equal-weight portfolio).
+      3. Compute cumulative PnL.
+
+    Returns a DataFrame with columns: daily_pnl, cumulative_pnl.
     """
-    if not pair_results:
-        return pd.DataFrame()
-
-    all_pnl = pd.DataFrame(
-        {f"{a}_{b}": df["net_pnl"] for (a, b), df in pair_results.items()}
-    )
-
-    portfolio = pd.DataFrame(index=all_pnl.index)
-    portfolio["daily_pnl"] = all_pnl.mean(axis=1)  # equal-weight average
-    portfolio["cumulative_pnl"] = portfolio["daily_pnl"].cumsum()
-
-    return portfolio
+    raise NotImplementedError("TODO: implement")
