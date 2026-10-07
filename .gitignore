@@ -1,0 +1,6 @@
+references/papers/*.pdf
+__pycache__/
+*.pyc
+.venv/
+data/cache/
+.ipynb_checkpoints/
