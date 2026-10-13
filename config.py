@@ -28,6 +28,31 @@ TICKERS = [
     "DIS", "NFLX", "CMCSA",
 ]
 
+SECTOR_MAP = {
+    # Technology
+    "AAPL": "tech", "MSFT": "tech", "GOOGL": "tech", "META": "tech", "NVDA": "tech", "AVGO": "tech", "ADBE": "tech", "CRM": "tech", "INTC": "tech", "CSCO": "tech",
+    # Financials
+    "JPM": "fin", "BAC": "fin", "WFC": "fin", "GS": "fin", "MS": "fin", "C": "fin", "BLK": "fin", "SCHW": "fin",
+    # Healthcare
+    "JNJ": "healthcare", "UNH": "healthcare", "PFE": "healthcare", "ABT": "healthcare", "MRK": "healthcare", "TMO": "healthcare", "ABBV": "healthcare", "LLY": "healthcare",
+    # Consumer Discretionary
+    "AMZN": "CD", "TSLA": "CD", "HD": "CD", "NKE": "CD", "SBUX": "CD", "MCD": "CD",
+    # Consumer Staples
+    "PG": "CS", "KO": "CS", "PEP": "CS", "WMT": "CS", "COST": "CS",
+    # Industrials
+    "CAT": "industrials", "HON": "industrials", "UPS": "industrials", "BA": "industrials", "GE": "industrials", "MMM": "industrials",
+    # Energy
+    "XOM": "energy", "CVX": "energy", "COP": "energy", "SLB": "energy",
+    # Materials
+    "LIN": "materials", "APD": "materials",
+    # Utilities
+    "NEE": "utilities", "DUK": "utilities",
+    # Communication Services
+    "DIS": "communication", "NFLX": "communication", "CMCSA": "communication"
+}
+
+
+
 # ── Date ranges ───────────────────────────────────────────────────────
 IN_SAMPLE_START = date(2015, 1, 1)
 IN_SAMPLE_END = date(2021, 12, 31)

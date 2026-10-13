@@ -16,36 +16,41 @@ def backtest_pair(
     fill_delay: int = config.FILL_DELAY,
     cost_frac: float = config.COST_FRAC,
 ) -> pd.DataFrame:
-    """Backtest a single pair.
+    """PnL for one pair with fill delay and transaction costs."""
+    delayed_pos = positions.shift(fill_delay)
+    delayed_beta = beta.shift(fill_delay)
 
-    Steps:
-      1. Delay positions and beta by `fill_delay` bars using .shift().
-         This models execution delay: signal at close t -> fill at close t+1.
-      2. Compute spread return:
-         spread_ret = y.pct_change() - delayed_beta * x.pct_change()
-      3. Gross PnL = delayed_position * spread_return
-      4. Transaction costs: charged on every position change.
-         pos_change = delayed_pos.diff().abs()
-         costs = pos_change * cost_frac * 2  (2 legs per pair trade)
-      5. Net PnL = gross - costs
-      6. Cumulative PnL = net_pnl.cumsum()
+    spread_ret = y.pct_change() - delayed_beta * x.pct_change()
+    gross_pnl = delayed_pos * spread_ret
 
-    Returns a DataFrame with columns:
-        position, spread_return, gross_pnl, costs, net_pnl, cumulative_pnl
-    """
-    raise NotImplementedError("TODO: implement")
+    pos_change = delayed_pos.diff().abs()
+    costs = pos_change * cost_frac * 2
+    net_pnl = gross_pnl - costs
+
+    result = pd.DataFrame(
+        {
+            "position": delayed_pos,
+            "spread_return": spread_ret,
+            "gross_pnl": gross_pnl,
+            "costs": costs,
+            "net_pnl": net_pnl,
+        },
+        index=y.index
+    )
+    result["cumulative_pnl"] = net_pnl.cumsum()
+    
+    return result 
 
 
 def aggregate_pairs(
     pair_results: dict[tuple[str, str], pd.DataFrame],
 ) -> pd.DataFrame:
-    """Combine PnL across all pairs (equal weight, additive returns).
+    """Equal-weight daily PnL across all pairs."""
+    all_pnl = pd.DataFrame({
+        f"{a}_{b}": df["net_pnl"] for (a, b), df in pair_results.items()
+    })
+    portfolio = pd.DataFrame(index=all_pnl.index)
+    portfolio["daily_pnl"] = all_pnl.mean(axis=1)
+    portfolio["cumulative_pnl"] = portfolio["daily_pnl"].cumsum()
 
-    Steps:
-      1. Extract the 'net_pnl' column from each pair's DataFrame.
-      2. Take the mean across all pairs for each day (equal-weight portfolio).
-      3. Compute cumulative PnL.
-
-    Returns a DataFrame with columns: daily_pnl, cumulative_pnl.
-    """
-    raise NotImplementedError("TODO: implement")
+    return portfolio
